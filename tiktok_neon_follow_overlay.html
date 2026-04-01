@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Follow Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text-main: #ffffff;
+      --glow-purple: #c000ff;
+      --glow-blue: #00cfff;
+      --bg-alpha: 0;
+      --font-size: clamp(36px, 4.2vw, 78px);
+      --duration: 4200ms;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, var(--bg-alpha));
+      overflow: hidden;
+      font-family: 'Orbitron', system-ui, sans-serif;
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+    }
+
+    .alert-wrap {
+      position: absolute;
+      left: 50%;
+      top: 22%;
+      transform: translateX(-50%);
+      width: min(90vw, 1300px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .alert {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 280px;
+      max-width: 100%;
+      padding: 18px 34px;
+      border-radius: 18px;
+      opacity: 0;
+      transform: translateY(18px) scale(0.94);
+      filter: blur(8px);
+    }
+
+    .alert.show {
+      animation: enter 700ms cubic-bezier(.2,.9,.2,1) forwards, pulse 1800ms ease-in-out 700ms infinite alternate;
+    }
+
+    .alert.hide {
+      animation: exit 450ms ease forwards;
+    }
+
+    .alert::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      background:
+        linear-gradient(90deg, rgba(192,0,255,0.14), rgba(0,207,255,0.14));
+      box-shadow:
+        0 0 22px rgba(192,0,255,0.22),
+        0 0 34px rgba(0,207,255,0.18),
+        inset 0 0 18px rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .alert::after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 20px;
+      background: linear-gradient(90deg, rgba(192,0,255,0.75), rgba(0,207,255,0.75));
+      filter: blur(16px);
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    .text {
+      position: relative;
+      z-index: 1;
+      max-width: 100%;
+      font-size: var(--font-size);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+      color: var(--text-main);
+      text-transform: uppercase;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow:
+        0 0 4px rgba(255,255,255,0.95),
+        0 0 10px rgba(255,255,255,0.7),
+        0 0 16px rgba(192,0,255,0.9),
+        0 0 32px rgba(192,0,255,0.8),
+        0 0 46px rgba(0,207,255,0.75),
+        0 0 66px rgba(0,207,255,0.55);
+    }
+
+    .flicker {
+      animation: flicker 3.2s linear infinite;
+    }
+
+    .scanline {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.11;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.08) 0px,
+        rgba(255,255,255,0.08) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      mix-blend-mode: screen;
+    }
+
+    .spark {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow:
+        0 0 8px #fff,
+        0 0 16px var(--glow-purple),
+        0 0 24px var(--glow-blue);
+      opacity: 0;
+    }
+
+    .alert.show .spark:nth-child(3) { animation: spark1 1.5s ease-out 150ms forwards; }
+    .alert.show .spark:nth-child(4) { animation: spark2 1.7s ease-out 220ms forwards; }
+    .alert.show .spark:nth-child(5) { animation: spark3 1.3s ease-out 320ms forwards; }
+    .alert.show .spark:nth-child(6) { animation: spark4 1.9s ease-out 110ms forwards; }
+
+    @keyframes enter {
+      0% { opacity: 0; transform: translateY(18px) scale(0.94); filter: blur(8px); }
+      65% { opacity: 1; transform: translateY(-4px) scale(1.02); filter: blur(0); }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
+    @keyframes exit {
+      0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+      100% { opacity: 0; transform: translateY(-10px) scale(0.97); filter: blur(6px); }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        transform: translateY(0) scale(1.012);
+      }
+    }
+
+    @keyframes flicker {
+      0%, 18%, 22%, 62%, 64%, 100% { opacity: 1; }
+      20% { opacity: 0.82; }
+      63% { opacity: 0.9; }
+    }
+
+    @keyframes spark1 {
+      0% { left: 16%; top: 60%; opacity: 0; transform: scale(0.4); }
+      15% { opacity: 1; }
+      100% { left: 8%; top: 20%; opacity: 0; transform: scale(1.25); }
+    }
+
+    @keyframes spark2 {
+      0% { right: 18%; top: 58%; opacity: 0; transform: scale(0.4); }
+      20% { opacity: 1; }
+      100% { right: 10%; top: 24%; opacity: 0; transform: scale(1.15); }
+    }
+
+    @keyframes spark3 {
+      0% { left: 32%; bottom: 18%; opacity: 0; transform: scale(0.3); }
+      15% { opacity: 1; }
+      100% { left: 26%; bottom: 58%; opacity: 0; transform: scale(1.1); }
+    }
+
+    @keyframes spark4 {
+      0% { right: 30%; bottom: 22%; opacity: 0; transform: scale(0.3); }
+      20% { opacity: 1; }
+      100% { right: 24%; bottom: 56%; opacity: 0; transform: scale(1.22); }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="alert-wrap">
+      <div id="alert" class="alert show">
+        <div class="scanline"></div>
+        <div id="text" class="text flicker">WELCOME RIZZY</div>
+        <div class="spark"></div>
+        <div class="spark"></div>
+        <div class="spark"></div>
+        <div class="spark"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const nameParam = params.get('name') || params.get('user') || params.get('username') || 'RIZZY';
+    const duration = Number(params.get('duration') || 4200);
+    const messageTemplate = params.get('message') || 'WELCOME {name}';
+    const autohide = params.get('autohide') !== 'false';
+
+    const textEl = document.getElementById('text');
+    const alertEl = document.getElementById('alert');
+
+    const safeName = String(nameParam).replace(/[<>]/g, '').trim() || 'RIZZY';
+    textEl.textContent = messageTemplate.replace('{name}', safeName.toUpperCase());
+
+    if (autohide) {
+      setTimeout(() => {
+        alertEl.classList.remove('show');
+        alertEl.classList.add('hide');
+      }, duration);
+    }
+
+    // Tiny helper for manual browser testing:
+    // ?name=James
+  </script>
+</body>
+</html>

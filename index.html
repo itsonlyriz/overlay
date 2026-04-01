@@ -206,6 +206,23 @@
     }
   </style>
 </head>
+  <script>
+async function getLatestFollower() {
+  try {
+    const res = await fetch("https://eoyjs8alfmnvckz.m.pipedream.net");
+    const data = await res.json();
+
+    if (data.name) {
+      document.querySelector(".text").innerText = "WELCOME " + data.name.toUpperCase();
+    }
+  } catch (err) {
+    console.log("Fetch error:", err);
+  }
+}
+
+// run every 2 seconds
+setInterval(getLatestFollower, 2000);
+</script>
 <body>
   <div class="stage">
     <div class="alert-wrap">
